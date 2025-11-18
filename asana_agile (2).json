@@ -1,0 +1,421 @@
+{
+  "name": "asana_agile",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {
+          "allowFileUploads": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "72760453-ad8f-40a0-bb30-ea48e8679007",
+      "name": "When chat message received",
+      "webhookId": "403aa2e9-644e-4f8d-ae51-b0292dee732b"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "=You are an expert Agile development consultant with deep experience in project breakdown and sprint planning.\nWhen I provide you with a project in {{ $json.sessionId }}, analyze it and deliver a structured Agile plan for {{ $json.chatInput }}.\n\n---\n\n### 🏁 Initial Discovery Process\nBegin by greeting the user warmly and asking:\n1️⃣ Project goal and scope  \n2️⃣ Target audience / ICP  \n3️⃣ Team composition and timeline constraints  \n4️⃣ Technical preferences and existing assets  \n5️⃣ Core features or services required  \n\nAfter gathering the answers, summarize clearly in natural language.\n\n---\n\n### ⚙️ Phase 1 – Project Overview & Setup\n1. Summarize project scope, duration, complexity, and goals.  \n2. Use **Asana Create Project** to create a new Asana project.  \n3. Add milestones and risk notes.  \n4. Confirm success and ask if the user is ready for Phase 2.\n\n**Schema – Asana Create Project**\n{\n\"Project_Name\": \"string\",\n\"Project_Description\": \"string\",\n\"Workspace_Name_or_ID\": \"string (workspace GID)\",\n\"Notes\": \"string (optional)\"\n}\n\n\nAsk:  \n✅ “Project created in Asana with milestones & risks. Proceed to Phase 2 – Epic Breakdown & Sprint Planning?”\n\n---\n\n### 🚀 Phase 2 – Epic-by-Epic Breakdown\nAfter confirmation:\n1. Use **Asana Get Project** to fetch the project GID.  \n2. Auto-generate epics (Planning, Design, Backend, Frontend, QA, Launch).  \n3. For each epic:  \n • Use **Asana Create Task** for the epic.  \n • Use **Asana Create Subtask** for nested items.  \n • Use **Asana Assign User** to assign by Asana GID.  \n\n**Schema – Asana Create Task**\n{\n\"Task_Name\": \"string\",\n\"assignee_id\": \"string (Asana user GID)\",\n\"Due_On\": \"string (YYYY-MM-DD)\",\n\"Notes\": \"string\",\n\"Project_Names_or_IDs\": \"string or array of project GIDs\"\n}\n\n**Schema – Asana Create Subtask**\n\n{\n\"Task_Name\": \"string\",\n\"assignee_id\": \"string (Asana user GID)\",\n\"Due_On\": \"string (YYYY-MM-DD)\",\n\"Notes\": \"string\",\n\"Parent_Task_ID\": \"string (GID of parent task)\"\n}\n\n\n**Schema – Asana Assign User**\n{\n\"assignee_name\": \"string (human name)\",\n\"assignee_id\": \"string (Asana user GID)\"\n}\n\n\n4. After each epic:  \n✅ “Epic <name> created in Asana with X tasks & Y subtasks. Continue to next epic?”  \n5. Continue until all epics complete, then summarize the entire sprint plan.\n\n---\n\n### 🧭 Guidelines\n• Always call tools by exact names:  \n **Asana Create Project**, **Asana Get Project**, **Asana Create Task**, **Asana Create Subtask**, **Asana Assign User**.  \n• Match parameters exactly to the schemas above.  \n• Always include workspace GID, project GID, due date (YYYY-MM-DD), and assignee GID.  \n• Ask questions only during Discovery.  \n• Act autonomously afterward.  \n• Never output raw JSON.  \n• Keep replies under 600 tokens.  \n• Maintain a friendly, professional tone (😊 🚀).  \n• End with a final summary and next steps.\n\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "5b0d2b0a-ab9e-44dc-a74e-15237006265c",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-20b:free",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -448,
+        432
+      ],
+      "id": "29e47b3e-3c7c-4a52-a8de-9eb0ffc49c58",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "dzYF5UEGBAOA3DhM",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -400,
+        272
+      ],
+      "id": "6523edeb-e174-4ea8-895b-fe39b04fd55a",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolThink",
+      "typeVersion": 1.1,
+      "position": [
+        -288,
+        272
+      ],
+      "id": "26d33bea-92a1-4d20-a5e0-2d8539781f9b",
+      "name": "Think"
+    },
+    {
+      "parameters": {
+        "model": "meta-llama/llama-3.3-70b-instruct:free",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        656,
+        320
+      ],
+      "id": "3b8d7247-1322-469c-beba-75593d27c5b4",
+      "name": "OpenRouter Chat Model1",
+      "credentials": {
+        "openRouterApi": {
+          "id": "dzYF5UEGBAOA3DhM",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        832,
+        480
+      ],
+      "id": "a196cea1-70d0-4898-8bc8-867ef4ba87a2",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "IwAM5TyVDStrZxPr",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -800,
+        256
+      ],
+      "id": "756a61df-598b-4963-880f-5a042783a154",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "IwAM5TyVDStrZxPr",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "project",
+        "operation": "create",
+        "name": "={{ $fromAI(\"Project_Name\") }}",
+        "workspace": "957922173970391",
+        "team": "1211573750873806",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.asanaTool",
+      "typeVersion": 1,
+      "position": [
+        16,
+        320
+      ],
+      "id": "07f15114-93ac-4aff-a2ab-9a45e4e96b23",
+      "name": "Create Project",
+      "credentials": {
+        "asanaOAuth2Api": {
+          "id": "kXIAt0ynC1H7uo51",
+          "name": "Asana account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "workspace": "957922173970391",
+        "name": "={{ $fromAI(\"Task_Name\") }}",
+        "otherProperties": {
+          "assignee": "={{ $fromAI(\"assignee_id\") }}",
+          "due_on": "={{ $fromAI('Due_On', ``, 'string') }}",
+          "notes": "={{ $fromAI('Notes', ``, 'string') }}",
+          "projects": "={{ $fromAI('Project_Names_or_IDs', ``, 'string') }}"
+        }
+      },
+      "type": "n8n-nodes-base.asanaTool",
+      "typeVersion": 1,
+      "position": [
+        176,
+        320
+      ],
+      "id": "a99eef39-e91d-4615-a303-2596afdb19c6",
+      "name": "Create Task",
+      "credentials": {
+        "asanaOAuth2Api": {
+          "id": "kXIAt0ynC1H7uo51",
+          "name": "Asana account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "subtask",
+        "taskId": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Parent_Task_ID', ``, 'string') }}",
+        "name": "={{ $fromAI(\"Task_Name\") }}",
+        "otherProperties": {
+          "assignee": "={{ $fromAI(\"assignee_id\") }}",
+          "due_on": "={{ $fromAI('Due_On', ``, 'string') }}",
+          "notes": "={{ $fromAI('Notes', ``, 'string') }}"
+        }
+      },
+      "type": "n8n-nodes-base.asanaTool",
+      "typeVersion": 1,
+      "position": [
+        320,
+        320
+      ],
+      "id": "40629802-0448-43bd-997a-faf88659fae5",
+      "name": "Create Subtask",
+      "credentials": {
+        "asanaOAuth2Api": {
+          "id": "kXIAt0ynC1H7uo51",
+          "name": "Asana account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "project",
+        "operation": "getAll",
+        "workspace": "957922173970391",
+        "limit": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Limit', ``, 'number') }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.asanaTool",
+      "typeVersion": 1,
+      "position": [
+        480,
+        320
+      ],
+      "id": "0ebc7160-0954-41de-ab10-9fef3a2a6858",
+      "name": "Get Project",
+      "credentials": {
+        "asanaOAuth2Api": {
+          "id": "kXIAt0ynC1H7uo51",
+          "name": "Asana account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "user",
+        "operation": "getAll",
+        "workspace": "957922173970391"
+      },
+      "type": "n8n-nodes-base.asanaTool",
+      "typeVersion": 1,
+      "position": [
+        976,
+        528
+      ],
+      "id": "94675178-705c-4e41-b2ac-1d2656df88c7",
+      "name": "Get Users",
+      "credentials": {
+        "asanaOAuth2Api": {
+          "id": "kXIAt0ynC1H7uo51",
+          "name": "Asana account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "AI agent to determine best user for the task",
+        "text": "=You are an HR expert and your job is to determine who to assign the given task to. Use the Asana tool to get a list of users and pass the most relevant GID as your output.\n\nUse the \"Get many users in Asana\" tools attached to do the assignement \nif tools fail then assign the task to one of these\n\n\nRohnit Rathod - Project Admin - GID: 1211573580039431 (default)\n\ndo not use anybody else \nthey are all rounders\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 2.2,
+      "position": [
+        832,
+        272
+      ],
+      "id": "f7f6b725-29bc-48e0-8683-b06011554226",
+      "name": "Assign User"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Think": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model1": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Assign User",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Project": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Task": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Subtask": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Project": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Users": {
+      "ai_tool": [
+        [
+          {
+            "node": "Assign User",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assign User": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "0ff848ba-528f-40d2-9b43-c10cbb5c9489",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f09babafdc1485239269141b15cfca00ccd4be059cf156b053ad1cd220dfd812"
+  },
+  "id": "5HjJo0VPFFIHbPt5",
+  "tags": []
+}

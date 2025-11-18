@@ -1,0 +1,851 @@
+{
+  "name": "with google sheets",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {
+          "allowFileUploads": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -1440,
+        -160
+      ],
+      "id": "c01764f1-c855-4db2-96e1-db5a674633d4",
+      "name": "When chat message received",
+      "webhookId": "403aa2e9-644e-4f8d-ae51-b0292dee732b"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('When chat message received').item.json.chatInput }}",
+        "options": {
+          "systemMessage": "=You are an expert agile development consultant with extensive experience in Jira, project breakdown, and sprint planning.\n\nWhen I provide you with a project in {{ $('When chat message received').item.json.sessionId }}, analyze it and deliver a structured breakdown for {{ $('When chat message received').item.json.chatInput }}.\n\n---\n\n## Initial Discovery Process\nStart by gathering all essential project details through targeted, friendly questions:\n- Project purpose and core objectives\n- Target audience / user persona\n- Expected features or service offerings\n- Technical stack preferences (if any)\n- Available team members, roles, and constraints\n- Target launch date or sprint cadence\n\nDo not create anything until you have enough details.\n\n---\n\n## Delivery Process\n\n### **Phase 1: Project Overview & Setup**\nOnce discovery is complete:\n1. Use the **Project Naming** tool to generate a clean, professional project name, description, and a random 5-letter Jira key.\n2. Use the **Jira Get All Projects** tool to check if this project already exists.\n3. If the project doesn’t exist, use the **Create Project** tool to create it.\n4. Present a concise summary:\n   - Project created successfully\n   - Key details (name, key, description)\n   - Estimated duration, complexity, team size\n\nExample internal structure (for reference only):\n{\n  \"project\": {\n    \"name\": \"Project Name\",\n    \"description\": \"Brief description of scope and goals\",\n    \"key\": \"ABCDE\",\n    \"estimated_duration\": \"6 weeks\",\n    \"complexity\": \"Medium\",\n    \"team_size\": 4,\n    \"target_launch\": \"YYYY-MM-DD\"\n  },\n  \"milestones\": [\n    {\n      \"name\": \"Milestone Name\",\n      \"date\": \"YYYY-MM-DD\",\n      \"description\": \"Key deliverable\"\n    }\n  ],\n  \"risks\": [\n    {\n      \"description\": \"Risk description\",\n      \"impact\": \"High/Medium/Low\",\n      \"mitigation\": \"Mitigation plan\"\n    }\n  ]\n}\n\nTools for this phase:\n- Project Naming → Create name, description, and Jira key\n- Jira Get All Projects → Check existing projects\n- Create Project → Create Jira project\n\n---\n\n### **Phase 2: Agile Breakdown**\nAfter project creation:\n1. Create epics, stories, and sub-tasks as structured Jira issues.\n2. Use the **Jira Create Story Node** tool to create each story.\n3. For every story, use the **Jira Create Sub-task Node** to add sub-tasks (Design, Development, QA, Docs, etc.).\n4. Fetch the list of users using **Get Team Members**.\n5. Use the **Find Jira User** tool to assign each task appropriately.\n\nInternal format for your own logic:\n{\n  \"epic\": {\n    \"name\": \"Epic Name\",\n    \"description\": \"Epic goal or context\",\n    \"stories\": [\n      {\n        \"story_title\": \"As a [user], I want to [goal], so that [benefit]\",\n        \"story_description\": \"Detailed acceptance criteria\",\n        \"subtasks\": [\n          {\n            \"subtask_title\": \"Subtask Name\",\n            \"subtask_description\": \"Detailed actionable description\",\n            \"assignee\": \"accountId\"\n          }\n        ]\n      }\n    ]\n  }\n}\n\nTools for this phase:\n- Jira Create Story Node → Create each story\n- Jira Create Sub-task Node → Create related subtasks\n- Get Team Members → Retrieve Jira users\n- Find Jira User → Determine assignee for each issue\n\n---\n\n### **Phase 3: Iterative Delivery**\n- Output one epic (set of stories and subtasks) at a time.\n- After each epic, ask the user: “Ready for Epic 2?”\n- Continue until all epics are complete.\n- Summarize progress with a brief project structure overview at the end.\n\n---\n\n## Guidelines\n- Keep outputs structured and concise.\n- Never display raw JSON to the user.\n- Confirm before performing bulk actions (like multiple stories).\n- Use conversational, professional tone with emojis sparingly (💡🚀✅).\n- Ensure stories have realistic effort estimates and dependencies.\n- Assign tasks logically based on team roles.\n\n---\n\n## Available Tools\n- **Think** → For reasoning and planning before taking action\n- **Project Naming** → To generate name, description, and Jira key\n- **Jira Get All Projects** → To fetch or validate existing projects\n- **Create Project** → To create a new Jira project\n- **Jira Create Story Node** → To create Jira stories\n- **Jira Create Sub-task Node** → To create sub-tasks under stories\n- **Get Team Members** → To fetch all available Jira users\n- **Find Jira User** → To assign issues to the most suitable person\n\n---\n\n**Begin each interaction by confirming the discovery process is complete before triggering Jira actions.**\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        448,
+        -160
+      ],
+      "id": "646d1aa9-4a88-46e1-9c26-49f3dcd4102b",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "z-ai/glm-4.5-air:free",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -272,
+        256
+      ],
+      "id": "ac84e3e1-6c57-482a-98a5-a6c2c8d1bdc3",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "dzYF5UEGBAOA3DhM",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -16,
+        272
+      ],
+      "id": "8199a4ff-75e7-47fd-ba57-c685b1526011",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolThink",
+      "typeVersion": 1.1,
+      "position": [
+        96,
+        272
+      ],
+      "id": "c73fe339-a201-4d3a-8c85-6b3d583bd190",
+      "name": "Think"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "project",
+        "operation": "getAll",
+        "workspace": "957922173970391",
+        "limit": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Limit', ``, 'number') }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.asanaTool",
+      "typeVersion": 1,
+      "position": [
+        880,
+        496
+      ],
+      "id": "869c16f0-9111-4f07-be40-8a113edf9159",
+      "name": "Get many projects in Asana",
+      "credentials": {
+        "asanaOAuth2Api": {
+          "id": "kXIAt0ynC1H7uo51",
+          "name": "Asana account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "subtask",
+        "taskId": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Parent_Task_ID', ``, 'string') }}",
+        "name": "={{ $fromAI(\"Task_Name\") }}",
+        "otherProperties": {
+          "assignee": "={{ $fromAI(\"assignee_id\") }}",
+          "due_on": "={{ $fromAI('Due_On', ``, 'string') }}",
+          "notes": "={{ $fromAI('Notes', ``, 'string') }}"
+        }
+      },
+      "type": "n8n-nodes-base.asanaTool",
+      "typeVersion": 1,
+      "position": [
+        672,
+        512
+      ],
+      "id": "2907642f-d3d8-4f20-aa13-6f3329fbafae",
+      "name": "Create a subtask in Asana",
+      "credentials": {
+        "asanaOAuth2Api": {
+          "id": "kXIAt0ynC1H7uo51",
+          "name": "Asana account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "user",
+        "operation": "getAll",
+        "workspace": "957922173970391"
+      },
+      "type": "n8n-nodes-base.asanaTool",
+      "typeVersion": 1,
+      "position": [
+        1424,
+        688
+      ],
+      "id": "1329185c-262d-490f-9cfd-8459a30c77dd",
+      "name": "Get many users in Asana",
+      "credentials": {
+        "asanaOAuth2Api": {
+          "id": "kXIAt0ynC1H7uo51",
+          "name": "Asana account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "AI agent to determine best user for the task",
+        "text": "=You are an AI HR allocator assisting Jira task assignment.\n\nUse the **Get Team Members** tool to fetch all users and decide who to assign each task to.\n\nRules:\n- Match by keywords in the task (e.g., “UI” → Designer, “API” → Developer).\n- If the task mentions “testing,” assign QA.\n- Default fallback:\n  - Rohit Rathod (Lead) → 712020:04de22da-7d81-4573-a2a3-6707e20900b5\n\nOutput:\n{\n  \"assignee_id\": \"JIRA_ACCOUNT_ID\"\n}\n\n",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 2.2,
+      "position": [
+        1328,
+        256
+      ],
+      "id": "c1aba543-88b3-4fa8-9ba4-0ee3b1c960d2",
+      "name": "Find user from asana"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1248,
+        512
+      ],
+      "id": "e40d5aca-0107-42e2-a712-b589dd5db7f2",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "IwAM5TyVDStrZxPr",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -512,
+        240
+      ],
+      "id": "321acf82-10d3-4ce3-a92b-6cc9de8ac3c8",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "IwAM5TyVDStrZxPr",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "workspace": "957922173970391",
+        "name": "={{ $fromAI(\"Task_Name\") }}",
+        "otherProperties": {
+          "assignee": "={{ $fromAI(\"assignee_id\") }}",
+          "due_on": "={{ $fromAI('Due_On', ``, 'string') }}",
+          "notes": "={{ $fromAI('Notes', ``, 'string') }}",
+          "projects": "={{ $fromAI('Project_Names_or_IDs', ``, 'string') }}"
+        }
+      },
+      "type": "n8n-nodes-base.asanaTool",
+      "typeVersion": 1,
+      "position": [
+        464,
+        512
+      ],
+      "id": "cb8e123a-7891-42c1-99d7-716ce77ffad4",
+      "name": "Create a task in Asana",
+      "credentials": {
+        "asanaOAuth2Api": {
+          "id": "kXIAt0ynC1H7uo51",
+          "name": "Asana account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Set Jira URL').item.json['Jira url'] }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "jiraSoftwareCloudApi",
+        "options": {}
+      },
+      "id": "a21854f3-cc90-4633-aa77-f8706d56341b",
+      "name": "Check Project Key & Get Status ID",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        -1184,
+        80
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "jiraSoftwareCloudApi": {
+          "id": "75iBDeAOsjCv5aUT",
+          "name": "Jira SW Cloud account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Set Jira URL').item.json['Jira url'] }}rest/api/3/project/{{ $json.key }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "jiraSoftwareCloudApi",
+        "options": {}
+      },
+      "id": "b53b1de2-990a-4e12-93da-4c3247bd62b1",
+      "name": "Get Status ID",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        -736,
+        80
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "jiraSoftwareCloudApi": {
+          "id": "75iBDeAOsjCv5aUT",
+          "name": "Jira SW Cloud account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "content": "## Create Project Process\nConfiguration:\nUpdate the Jira credentials with yours.",
+        "height": 300,
+        "width": 620,
+        "color": 4
+      },
+      "id": "1fa41fd4-5b6e-4db0-bfb0-7da3d80f19cd",
+      "name": "Sticky Note3",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1232,
+        -48
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "Update the Jira URL with your Jira instance URL (example: https://testproject.atlassian.net)\n",
+        "height": 260,
+        "width": 260,
+        "color": 4
+      },
+      "id": "1cee6c0d-e86f-4247-ac9e-29e42e119d0e",
+      "name": "Sticky Note7",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -320,
+        -272
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-20b:free",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -336,
+        640
+      ],
+      "id": "864ef2ca-208a-4d29-92ad-0e7477bf796b",
+      "name": "OpenRouter Chat Model1",
+      "credentials": {
+        "openRouterApi": {
+          "id": "dzYF5UEGBAOA3DhM",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "31fe9b8d-1cea-40e8-9381-453bea1d2ad1",
+              "name": "Jira url",
+              "type": "string",
+              "value": "https://sandsconsultancy.atlassian.net/"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "9f3ba2fe-80fa-48be-b7ab-073b9a1b85c6",
+      "name": "Set Jira URL",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        -240,
+        -160
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"project_name\": \"Clean and professional project name here\",\n  \"project_description\": \"Clear and concise one-paragraph description of the project with technical clarity and business relevance.\",\n  \"project_key\": \"ABCDE\"\n}"
+      },
+      "id": "174c6296-8301-426b-9dca-1a3a5517cb6e",
+      "name": "Structured Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "position": [
+        288,
+        704
+      ],
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "project",
+        "operation": "create",
+        "name": "={{ $fromAI(\"Project_Name\") }}",
+        "workspace": "957922173970391",
+        "team": "1211573750873806",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.asanaTool",
+      "typeVersion": 1,
+      "position": [
+        128,
+        864
+      ],
+      "id": "11ea61df-2b72-44cf-b45f-422cb81b2f05",
+      "name": "Create a project in Asana",
+      "credentials": {
+        "asanaOAuth2Api": {
+          "id": "kXIAt0ynC1H7uo51",
+          "name": "Asana account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Project Naming",
+        "text": "=You are a naming expert and technical writer.  \nYour task is to clean up and enhance the following rough input into a professional-sounding **project name** and **concise, clear project description**, and generate a suitable **Jira project key**.\n\nThe project key must be 5 uppercase letters, randomly generated and not necessarily related to the project name. For example, it could be \"XQJTR\" or \"MBZKD\"\n\nReturn only the result in JSON format with three fields: `project_name`, `project_description`, and `project_key`.\n\n---\n\n### Input:\n{{ $json.chatInput }}\n\n---\n\n### Output format:\n```json\n{\n  \"project_name\": \"Clean and professional project name here\",\n  \"project_description\": \"Clear and concise one-paragraph description of the project with technical clarity and business relevance.\",\n  \"project_key\": \"ABCDE\"\n}\n```\n\nOnly return the JSON. Do not include any commentary or explanation.\n",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 2.2,
+      "position": [
+        48,
+        448
+      ],
+      "id": "6db11ce5-f0e5-42e4-b3c2-97eafcd72417",
+      "name": "Project Naming"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Set Jira URL').item.json['Jira url'] }}rest/api/3/project",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "jiraSoftwareCloudApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"key\": \"{{ $('Project Naming').item.json.output.project_key }}\", \n  \"name\": \"{{ $('Project Naming').item.json.output.project_name }}\", \n  \"projectTypeKey\": \"software\", \n  \"projectTemplateKey\": \"com.pyxis.greenhopper.jira:gh-simplified-agility-scrum\", \n  \"description\": \"Project created via n8n\", \n  \"leadAccountId\": \"712020:04de22da-7d81-4573-a2a3-6707e20900b5\", \n  \"assigneeType\": \"PROJECT_LEAD\" \n}",
+        "options": {}
+      },
+      "id": "eac1f477-bc7d-4c77-a0e6-e39f28381fa4",
+      "name": "Create Project1",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        -944,
+        80
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "jiraSoftwareCloudApi": {
+          "id": "75iBDeAOsjCv5aUT",
+          "name": "Jira SW Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "=Makes an HTTP request and returns the response data",
+        "method": "POST",
+        "url": "={{ $('Set Jira URL').item.json['Jira url'] }}rest/api/3/project",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "jiraSoftwareCloudApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \n  \"key\": \"{{ $from('Project Naming').item.json.output.project_key }}\", \n  \"name\": \"{{ $from('Project Naming').item.json.output.project_name }}\", \n  \"projectTypeKey\": \"software\", \n  \"projectTemplateKey\": \"com.pyxis.greenhopper.jira:gh-simplified-agility-scrum\", \n  \"description\": \"Project created via n8n\", \n  \"leadAccountId\": \"712020:04de22da-7d81-4573-a2a3-6707e20900b5\", \n  \"assigneeType\": \"PROJECT_LEAD\" \n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        144,
+        704
+      ],
+      "id": "65b43e08-af18-4772-9b41-c8ff14ff5e4a",
+      "name": "Create Project",
+      "credentials": {
+        "jiraSoftwareCloudApi": {
+          "id": "75iBDeAOsjCv5aUT",
+          "name": "Jira SW Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        0,
+        704
+      ],
+      "id": "a67802b6-90f3-4529-bd13-39877d960bb3",
+      "name": "Google Gemini Chat Model2",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "IwAM5TyVDStrZxPr",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "project": {
+          "__rl": true,
+          "value": "={{ $fromAI('project_key') }}",
+          "mode": "id"
+        },
+        "issueType": {
+          "__rl": true,
+          "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Issue_Type', ``, 'string') }}",
+          "mode": "id"
+        },
+        "summary": "={{ $fromAI('story_title') }}",
+        "additionalFields": {
+          "description": "={{ $fromAI('story_description') }}"
+        }
+      },
+      "type": "n8n-nodes-base.jiraTool",
+      "typeVersion": 1,
+      "position": [
+        464,
+        304
+      ],
+      "id": "537ab9bb-99ed-4ed6-a524-4ddaa7365f77",
+      "name": "Jira Create Story Node",
+      "credentials": {
+        "jiraSoftwareCloudApi": {
+          "id": "75iBDeAOsjCv5aUT",
+          "name": "Jira SW Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "project": {
+          "__rl": true,
+          "value": "={{ $fromAI('project_key') }}",
+          "mode": "id"
+        },
+        "issueType": {
+          "__rl": true,
+          "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Issue_Type', ``, 'string') }}",
+          "mode": "id",
+          "__regex": "^([0-9]{1,})"
+        },
+        "summary": "={{ $fromAI('subtask_title') }}",
+        "additionalFields": {
+          "description": "={{ $fromAI('subtask_description') }}",
+          "parentIssueKey": "={{ $fromAI('parent_story_key') }}"
+        }
+      },
+      "type": "n8n-nodes-base.jiraTool",
+      "typeVersion": 1,
+      "position": [
+        640,
+        304
+      ],
+      "id": "a65131e6-f703-467c-aa4c-b7d241ae7f08",
+      "name": "Jira Create Sub-task Node",
+      "credentials": {
+        "jiraSoftwareCloudApi": {
+          "id": "75iBDeAOsjCv5aUT",
+          "name": "Jira SW Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Set Jira URL').item.json['Jira url'] }}rest/api/3/project/search",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "jiraSoftwareCloudApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        848,
+        288
+      ],
+      "id": "97b3c8cb-163f-4c5d-a4e5-4b8cdcc5df84",
+      "name": "Jira Get All Projects",
+      "credentials": {
+        "jiraSoftwareCloudApi": {
+          "id": "75iBDeAOsjCv5aUT",
+          "name": "Jira SW Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Set Jira URL').item.json['Jira url'] }}rest/api/3/users/search",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        1408,
+        512
+      ],
+      "id": "86c48d84-657f-474d-a358-59e49d05e277",
+      "name": "Get Team Members"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n\"assignee_id\": \"JIRA_ACCOUNT_ID\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1584,
+        512
+      ],
+      "id": "e62e5456-a8e2-4ed1-86e3-4f08e817e68c",
+      "name": "Structured Output Parser1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Set Jira URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Think": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many projects in Asana": {
+      "ai_tool": [
+        []
+      ]
+    },
+    "Create a subtask in Asana": {
+      "ai_tool": [
+        []
+      ]
+    },
+    "Get many users in Asana": {
+      "ai_tool": [
+        []
+      ]
+    },
+    "Find user from asana": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Find user from asana",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a task in Asana": {
+      "ai_tool": [
+        []
+      ]
+    },
+    "Check Project Key & Get Status ID": {
+      "main": [
+        [
+          {
+            "node": "Create Project1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model1": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "Get Status ID": {
+      "main": [
+        []
+      ]
+    },
+    "Set Jira URL": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Project Naming",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a project in Asana": {
+      "ai_tool": [
+        []
+      ]
+    },
+    "Project Naming": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Project1": {
+      "main": [
+        [
+          {
+            "node": "Get Status ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Project": {
+      "ai_tool": [
+        [
+          {
+            "node": "Project Naming",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Project Naming",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Jira Create Story Node": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Jira Create Sub-task Node": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Jira Get All Projects": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Team Members": {
+      "ai_tool": [
+        [
+          {
+            "node": "Find user from asana",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Find user from asana",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "8c53f91e-d439-407c-8257-1d5bf51a3edc",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f09babafdc1485239269141b15cfca00ccd4be059cf156b053ad1cd220dfd812"
+  },
+  "id": "Dq8yyBmgC7vTG57R",
+  "tags": []
+}

@@ -1,0 +1,546 @@
+{
+  "name": "with google sheets",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {
+          "allowFileUploads": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -1600,
+        -336
+      ],
+      "id": "43ec5fa8-27b1-4e34-b54c-43dee00f4749",
+      "name": "When chat message received",
+      "webhookId": "403aa2e9-644e-4f8d-ae51-b0292dee732b"
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 25
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -352,
+        -112
+      ],
+      "id": "dc45c9a3-f23e-4f9f-b8fb-e01822778142",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolThink",
+      "typeVersion": 1.1,
+      "position": [
+        -224,
+        -112
+      ],
+      "id": "be43592a-d2c3-4111-bf2e-ec60a01d6086",
+      "name": "Think"
+    },
+    {
+      "parameters": {
+        "content": "Update the Jira URL with your Jira instance URL (example: https://testproject.atlassian.net)\n",
+        "height": 260,
+        "width": 260,
+        "color": 4
+      },
+      "id": "4ef48f96-5143-427c-870c-c5978c5ed8c0",
+      "name": "Sticky Note7",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1458,
+        -436
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "31fe9b8d-1cea-40e8-9381-453bea1d2ad1",
+              "name": "Jira url",
+              "type": "string",
+              "value": "https://sandsconsultancy.atlassian.net"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8b0c91ba-efae-4d55-abd9-101e47f48a2b",
+      "name": "Set Jira URL",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        -1376,
+        -336
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "toolDescription": "=Makes an HTTP request and returns the response data",
+        "method": "POST",
+        "url": "={{ $('Set Jira URL').item.json['Jira url'] }}/rest/api/3/project",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "jiraSoftwareCloudApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"key\": \"{{ $json.project_key }}\",\n  \"name\": \"{{ $json.project_name }}\",\n  \"projectTypeKey\": \"software\",\n  \"projectTemplateKey\": \"com.pyxis.greenhopper.jira:gh-simplified-agility-scrum\",\n  \"description\": \"{{ $json.project_description }}\",\n  \"leadAccountId\": \"{{ $json.output.lead_account_id }}\",\n  \"assigneeType\": \"PROJECT_LEAD\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        -96,
+        -112
+      ],
+      "id": "dc546d29-490c-4fb9-9900-e702129a9819",
+      "name": "Create Project",
+      "credentials": {
+        "jiraSoftwareCloudApi": {
+          "id": "75iBDeAOsjCv5aUT",
+          "name": "Jira SW Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Set Jira URL').item.json['Jira url'] }}/rest/api/3/project/search",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "jiraSoftwareCloudApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        32,
+        -112
+      ],
+      "id": "391f14d1-caf3-4c59-9f81-c5832b01b5b0",
+      "name": "Jira Get All Projects",
+      "credentials": {
+        "jiraSoftwareCloudApi": {
+          "id": "75iBDeAOsjCv5aUT",
+          "name": "Jira SW Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Set Jira URL').item.json['Jira url'] }}/rest/api/3/users/search",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        304,
+        96
+      ],
+      "id": "47b67c3c-90ea-4b33-879f-4de6bce25a58",
+      "name": "Get Team Members"
+    },
+    {
+      "parameters": {
+        "toolDescription": "AI agent to determine best user for the task",
+        "text": "=You assign Jira issues to users.\n\nUse \"Get Team Members\" to fetch available members, then decide best assignee based on:\n- Keywords (\"UI\"→Designer, \"API\"→Developer, \"Test\"→QA)\n- Default fallback: Rohit Rathod (accountId: 712020:04de22da-7d81-4573-a2a3-6707e20900b5) - use this if the \"Get Team Members\" tool call fails\n\nOutput valid JSON only:\n{\"assignee_id\": \"JIRA_ACCOUNT_ID\"}\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 2.2,
+      "position": [
+        160,
+        -112
+      ],
+      "id": "1f6368f4-da11-4390-8870-68478b1cd2cc",
+      "name": "Find Jira User"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('When chat message received').item.json.chatInput }}",
+        "options": {
+          "systemMessage": "=You are an agile Jira automation expert. \nYour job: create or reuse a Jira project and generate a sprint-ready structure with epics, stories, and subtasks.\n\nProcess:\n1. Use \"Jira Get All Projects\" to check if project exists.\n2. If missing, use \"Create Project\" with:\n   - name/key/desc from Project Naming\n   - projectTypeKey: \"software\"\n   - template: \"com.pyxis.greenhopper.jira:gh-simplified-agility-scrum\"\n   - leadAccountId from Find Jira User\n3. Create Epics, Stories, and Subtasks using Jira tools.\n4. Use \"Find Jira User\" for assignees.\n5. Summarize all created items.\n\nResponse: structured text summary with\n- Project name, key\n- Number of Epics, Stories, Subtasks\n- Assigned users\n\nRules:\n- Be concise and call tools directly.\n- Never ask for manual project creation.\n- Skip markdown or emojis.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        168,
+        -336
+      ],
+      "id": "eee636d0-2adb-4461-bb9a-f428126bc406",
+      "name": "Jira Agent"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "40b2b866-6033-415e-a78d-9d0d8e308cd0",
+              "name": "project_name",
+              "value": "={{ $json.project_name }}",
+              "type": "string"
+            },
+            {
+              "id": "254fdf60-3084-4c47-bf70-3c58fad40b98",
+              "name": "project_description",
+              "value": "={{ $json.project_description }}",
+              "type": "string"
+            },
+            {
+              "id": "c41b8e2e-d574-4f09-9029-5a2d6b19a0de",
+              "name": "project_key",
+              "value": "={{ $json.project_key }}",
+              "type": "string"
+            },
+            {
+              "id": "38c19859-b977-4f30-abf0-43c552342405",
+              "name": "output.lead_account_id",
+              "value": "=712020:04de22da-7d81-4573-a2a3-6707e20900b5",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -576,
+        -336
+      ],
+      "id": "da12762a-81b6-4b57-af4f-90ef29fad513",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('When chat message received').item.json.chatInput }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are a Jira project setup assistant.\nOutput only a valid JSON object. Do not include markdown, backticks, or explanations.\n\nExample output:\n{\"project_name\": \"Website Builder\", \"project_description\": \"Platform for building websites easily\", \"project_key\": \"WXBZR\"}\n\nNow, based on the input below, generate:\n- project_name (concise professional title)\n- project_description (one-sentence summary)\n- project_key (random 5 uppercase letters)\n\nInput: {{ $('When chat message received').item.json.chatInput }}\n\nReturn only valid JSON.\n"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -1152,
+        -336
+      ],
+      "id": "f840032a-0c29-4f0f-80c3-4b687b9fdc21",
+      "name": "Project Naming"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -1080,
+        -112
+      ],
+      "id": "d168f6b9-72a2-4cd5-b215-e725d38c8dcf",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "IwAM5TyVDStrZxPr",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract the model output and parse it into real JSON\nlet raw = $json.text || $json.output || JSON.stringify($json);\n\n// Clean up extra backslashes and trim whitespace\nraw = raw.replace(/^\"+|\"+$/g, '').replace(/\\\\\"/g, '\"').trim();\n\n// Try parsing\ntry {\n  const parsed = JSON.parse(raw);\n  return [{ json: parsed }];\n} catch (error) {\n  return [{ json: { error: \"Parsing failed\", raw } }];\n}\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -800,
+        -336
+      ],
+      "id": "a9bc1a19-b2f3-4d7e-bc99-d2531d996a65",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Set Jira URL').item.json['Jira url'] }}/rest/api/3/issue",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"fields\": {\n    \"project\": { \"key\": \"{{ $json.project_key }}\" },\n    \"issuetype\": { \"name\": \"Story\" },\n    \"summary\": \"{{ $json.story_title }}\",\n    \"description\": \"{{ $json.story_description }}\",\n    \"customfield_10014\": \"{{ $json.epic_key || '' }}\",\n    \"labels\": [\"AutoCreated\", \"Story\", \"n8n\"]\n  }\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        448,
+        -112
+      ],
+      "id": "e16db929-6a65-4e09-b427-be71a7dbc460",
+      "name": "Create Story"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Set Jira URL').item.json['Jira url'] }}/rest/api/3/issue",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"fields\": {\n    \"project\": { \"key\": \"{{ $json.project_key }}\" },\n    \"issuetype\": { \"name\": \"Epic\" },\n    \"summary\": \"{{ $json.epic_name }}\",\n    \"description\": \"{{ $json.epic_description }}\",\n    \"customfield_10011\": \"{{ $json.epic_name }}\",\n    \"labels\": [\"AutoCreated\", \"Epic\", \"n8n\"]\n  }\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        576,
+        -112
+      ],
+      "id": "759969d0-16ce-4dec-9c93-37462d9a760d",
+      "name": "Create Epic"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Set Jira URL').item.json['Jira url'] }}/rest/api/3/issue",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"fields\": {\n    \"project\": { \"key\": \"{{ $json.project_key }}\" },\n    \"issuetype\": { \"name\": \"Task\" },\n    \"summary\": \"{{ $json.task_title }}\",\n    \"description\": \"{{ $json.task_description }}\",\n    \"assignee\": { \"id\": \"{{ $json.assignee_id || '' }}\" },\n    \"customfield_10014\": \"{{ $json.epic_key || '' }}\",\n    \"parent\": { \"key\": \"{{ $json.story_key || '' }}\" },\n    \"labels\": [\"AutoCreated\", \"Task\", \"n8n\"]\n  }\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        704,
+        -112
+      ],
+      "id": "c0b93a2b-1b9a-4cac-bb4f-d0150e4ae1ad",
+      "name": "Create Task"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Set Jira URL').item.json['Jira url'] }}/rest/api/3/issue",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"fields\": {\n    \"project\": { \"key\": \"{{ $json.project_key }}\" },\n    \"issuetype\": { \"name\": \"Sub-task\" },\n    \"summary\": \"{{ $json.subtask_title }}\",\n    \"description\": \"{{ $json.subtask_description }}\",\n    \"parent\": { \"key\": \"{{ $json.parent_story_key }}\" },\n    \"assignee\": { \"id\": \"{{ $json.assignee_id || '' }}\" },\n    \"labels\": [\"AutoCreated\", \"SubTask\", \"n8n\"]\n  }\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        832,
+        -112
+      ],
+      "id": "eae1a462-6f73-41c8-96fd-49fdae57508c",
+      "name": "Create Sub-Task"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Set Jira URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Jira Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Think": {
+      "ai_tool": [
+        [
+          {
+            "node": "Jira Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Jira URL": {
+      "main": [
+        [
+          {
+            "node": "Project Naming",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Project": {
+      "ai_tool": [
+        [
+          {
+            "node": "Jira Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Jira Get All Projects": {
+      "ai_tool": [
+        [
+          {
+            "node": "Jira Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Team Members": {
+      "ai_tool": [
+        [
+          {
+            "node": "Find Jira User",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Jira User": {
+      "ai_tool": [
+        [
+          {
+            "node": "Jira Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Jira Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Project Naming": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Project Naming",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Jira Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Find Jira User",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Story": {
+      "ai_tool": [
+        [
+          {
+            "node": "Jira Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Epic": {
+      "ai_tool": [
+        [
+          {
+            "node": "Jira Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Task": {
+      "ai_tool": [
+        [
+          {
+            "node": "Jira Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Sub-Task": {
+      "ai_tool": [
+        [
+          {
+            "node": "Jira Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "78d20579-d457-4684-a44f-4458b1c1649d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f09babafdc1485239269141b15cfca00ccd4be059cf156b053ad1cd220dfd812"
+  },
+  "id": "Dq8yyBmgC7vTG57R",
+  "tags": []
+}
